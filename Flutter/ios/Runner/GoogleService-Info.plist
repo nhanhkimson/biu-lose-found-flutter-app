@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CLIENT_ID</key>
+	<string>894329943560-8uhdi108hjcrgam200v0t006di3683d3.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.894329943560-8uhdi108hjcrgam200v0t006di3683d3</string>
+	<key>API_KEY</key>
+	<string>AIzaSyBnS0NENQXuZySPSapamOLVLNEj98pHoOI</string>
+	<key>GCM_SENDER_ID</key>
+	<string>894329943560</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.exampe.belteiApp</string>
+	<key>PROJECT_ID</key>
+	<string>biu-lose-and-found</string>
+	<key>STORAGE_BUCKET</key>
+	<string>biu-lose-and-found.firebasestorage.app</string>
+	<key>IS_ADS_ENABLED</key>
+	<false/>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false/>
+	<key>IS_APPINVITE_ENABLED</key>
+	<true/>
+	<key>IS_GCM_ENABLED</key>
+	<true/>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true/>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:894329943560:ios:9dbd1dce9876f5d7e983bd</string>
+</dict>
+</plist>

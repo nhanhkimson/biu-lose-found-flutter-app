@@ -1,0 +1,51 @@
+{
+  "hosting": {
+    "public": "build/web",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  },
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "biu-lose-and-found",
+          "appId": "1:894329943560:android:bbdcf9f58a02f0d5e983bd",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "ios": {
+        "default": {
+          "projectId": "biu-lose-and-found",
+          "appId": "1:894329943560:ios:9dbd1dce9876f5d7e983bd",
+          "uploadDebugSymbols": false,
+          "fileOutput": "ios/Runner/GoogleService-Info.plist"
+        }
+      },
+      "macos": {
+        "default": {
+          "projectId": "biu-lose-and-found",
+          "appId": "1:894329943560:ios:697174fefe2b2605e983bd",
+          "uploadDebugSymbols": false,
+          "fileOutput": "macos/Runner/GoogleService-Info.plist"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "biu-lose-and-found",
+          "configurations": {
+            "web": "1:894329943560:web:093573773770f481e983bd"
+          }
+        }
+      }
+    }
+  }
+}

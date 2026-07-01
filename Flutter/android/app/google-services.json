@@ -1,0 +1,82 @@
+{
+  "project_info": {
+    "project_number": "894329943560",
+    "project_id": "biu-lose-and-found",
+    "storage_bucket": "biu-lose-and-found.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:894329943560:android:7954fbdb6c222cd8e983bd",
+        "android_client_info": {
+          "package_name": "com.biu.lostandfound"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "894329943560-6vbrnakcbto43kk61bbg8709af4bvr3e.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD0zhAbi9A1pnY2Yg8X44AH5hGBxNbaWsE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "894329943560-6vbrnakcbto43kk61bbg8709af4bvr3e.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "894329943560-8uhdi108hjcrgam200v0t006di3683d3.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.exampe.belteiApp"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:894329943560:android:bbdcf9f58a02f0d5e983bd",
+        "android_client_info": {
+          "package_name": "com.example.beltei_app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "894329943560-6vbrnakcbto43kk61bbg8709af4bvr3e.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD0zhAbi9A1pnY2Yg8X44AH5hGBxNbaWsE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "894329943560-6vbrnakcbto43kk61bbg8709af4bvr3e.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "894329943560-8uhdi108hjcrgam200v0t006di3683d3.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.exampe.belteiApp"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
