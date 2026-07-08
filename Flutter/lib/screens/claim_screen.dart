@@ -1,4 +1,4 @@
-import 'package:beltei_app/core/network/api_client.dart';
+import 'package:beltei_app/data/firebase/storage_upload_store.dart';
 import 'package:beltei_app/data/models/lost_found_item.dart';
 import 'package:beltei_app/data/repositories/claims_repository.dart';
 import 'package:beltei_app/widgets/primary_button.dart';
@@ -18,7 +18,7 @@ class ClaimScreen extends StatefulWidget {
 class _ClaimScreenState extends State<ClaimScreen> {
   final _message = TextEditingController();
   final _claims = Get.find<ClaimsRepository>();
-  final _api = Get.find<ApiClient>();
+  final _uploads = Get.find<StorageUploadStore>();
   final _proofUrls = <String>[];
   bool _loading = false;
 
@@ -34,7 +34,7 @@ class _ClaimScreenState extends State<ClaimScreen> {
     if (file == null) return;
     setState(() => _loading = true);
     try {
-      final url = await _api.uploadImageFile(file);
+      final url = await _uploads.uploadImageFile(file, folder: 'claims');
       setState(() => _proofUrls.add(url));
     } catch (e) {
       if (mounted) {

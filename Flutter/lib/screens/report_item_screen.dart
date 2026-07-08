@@ -1,6 +1,6 @@
 import 'package:beltei_app/controllers/auth_controller.dart';
 import 'package:beltei_app/core/constants/lost_found_constants.dart';
-import 'package:beltei_app/core/network/api_client.dart';
+import 'package:beltei_app/data/firebase/storage_upload_store.dart';
 import 'package:beltei_app/data/repositories/items_repository.dart';
 import 'package:beltei_app/screens/login_screen.dart';
 import 'package:beltei_app/widgets/primary_button.dart';
@@ -19,7 +19,7 @@ class ReportItemScreen extends StatefulWidget {
 
 class _ReportItemScreenState extends State<ReportItemScreen> {
   final _repo = Get.find<ItemsRepository>();
-  final _api = Get.find<ApiClient>();
+  final _uploads = Get.find<StorageUploadStore>();
 
   late String _type;
   final _title = TextEditingController();
@@ -61,7 +61,7 @@ class _ReportItemScreenState extends State<ReportItemScreen> {
     if (file == null) return;
     setState(() => _loading = true);
     try {
-      final url = await _api.uploadImageFile(file);
+      final url = await _uploads.uploadImageFile(file);
       setState(() => _imageUrls.add(url));
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));

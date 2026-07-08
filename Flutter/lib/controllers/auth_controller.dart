@@ -1,4 +1,5 @@
 import 'package:beltei_app/core/network/api_exception.dart';
+import 'package:beltei_app/core/utils/auth_debug_log.dart';
 import 'package:beltei_app/core/utils/firebase_auth_errors.dart';
 import 'package:beltei_app/core/utils/firebase_firestore_errors.dart';
 import 'package:beltei_app/data/models/app_user.dart';
@@ -44,18 +45,25 @@ class AuthController extends GetxController {
   Future<void> waitForRestore() => _restoreFuture;
 
   Future<void> _restore() async {
-    if (!await _auth.isLoggedIn()) return;
+    authLog('restore:start');
+    if (!await _auth.isLoggedIn()) {
+      authLog('restore:skip', 'not logged in');
+      return;
+    }
 
     user.value = await _auth.currentUser();
+    authLog('restore:cachedUser', user.value?.id);
     isLoading.value = true;
     try {
       final remote = await _auth.fetchSessionUser();
       if (remote != null) user.value = remote;
+      authLog('restore:remoteUser', remote?.id);
       if (Get.isRegistered<ProfileController>() && user.value != null) {
         Get.find<ProfileController>().profile.value = user.value;
       }
     } finally {
       isLoading.value = false;
+      authLog('restore:done', 'isLoggedIn=$isLoggedIn');
     }
   }
 
@@ -86,30 +94,91 @@ class AuthController extends GetxController {
     }
   }
 
-  Future<bool> loginWithFacebook() async {
+  Future<bool> loginWithGoogle() async {
+    authLog('controller:googleLogin:start');
     isLoading.value = true;
     error.value = '';
     try {
-      user.value = await _auth.loginWithFacebook();
+      user.value = await _auth.loginWithGoogle();
+      authLog(
+        'controller:googleLogin:success',
+        'uid=${user.value?.id} name=${user.value?.name}',
+      );
       if (Get.isRegistered<ProfileController>()) {
         Get.find<ProfileController>().profile.value = user.value;
       }
       setWelcomeMessage(user.value?.displayName ?? '');
       return true;
+    } on AuthCancelledException {
+      authLog('controller:googleLogin:cancelled');
+      return false;
     } on FirebaseAuthException catch (e) {
       error.value = mapFirebaseAuthError(e);
+      authLog('controller:googleLogin:firebaseAuthError', '${e.code}: ${e.message}');
       return false;
     } on ApiException catch (e) {
       error.value = e.message;
+      authLog('controller:googleLogin:apiException', e.message);
       return false;
     } on FirebaseException catch (e) {
       error.value = mapFirestoreError(e);
+      authLog('controller:googleLogin:firebaseException', '${e.code}: ${e.message}');
       return false;
-    } catch (e) {
+    } catch (e, st) {
       error.value = e.toString();
+      authLog('controller:googleLogin:unknownError', e);
+      authLog('controller:googleLogin:stack', st);
       return false;
     } finally {
       isLoading.value = false;
+      authLog(
+        'controller:googleLogin:done',
+        'ok=${user.value != null} error="${error.value}" isLoggedIn=$isLoggedIn',
+      );
+    }
+  }
+
+  Future<bool> loginWithFacebook() async {
+    authLog('controller:facebookLogin:start');
+    isLoading.value = true;
+    error.value = '';
+    try {
+      user.value = await _auth.loginWithFacebook();
+      authLog(
+        'controller:facebookLogin:success',
+        'uid=${user.value?.id} name=${user.value?.name}',
+      );
+      if (Get.isRegistered<ProfileController>()) {
+        Get.find<ProfileController>().profile.value = user.value;
+      }
+      setWelcomeMessage(user.value?.displayName ?? '');
+      return true;
+    } on AuthCancelledException {
+      authLog('controller:facebookLogin:cancelled');
+      return false;
+    } on FirebaseAuthException catch (e) {
+      error.value = mapFirebaseAuthError(e);
+      authLog('controller:facebookLogin:firebaseAuthError', '${e.code}: ${e.message}');
+      return false;
+    } on ApiException catch (e) {
+      error.value = e.message;
+      authLog('controller:facebookLogin:apiException', e.message);
+      return false;
+    } on FirebaseException catch (e) {
+      error.value = mapFirestoreError(e);
+      authLog('controller:facebookLogin:firebaseException', '${e.code}: ${e.message}');
+      return false;
+    } catch (e, st) {
+      error.value = e.toString();
+      authLog('controller:facebookLogin:unknownError', e);
+      authLog('controller:facebookLogin:stack', st);
+      return false;
+    } finally {
+      isLoading.value = false;
+      authLog(
+        'controller:facebookLogin:done',
+        'ok=${user.value != null} error="${error.value}" isLoggedIn=$isLoggedIn',
+      );
     }
   }
 
@@ -153,6 +222,7 @@ class AuthController extends GetxController {
   }
 
   Future<void> logout() async {
+    authLog('controller:logout');
     await _auth.logout();
     user.value = null;
   }
@@ -163,5 +233,3 @@ class AuthController extends GetxController {
     if (remote != null) user.value = remote;
   }
 }
-
-// flutter run -d emulator-5554

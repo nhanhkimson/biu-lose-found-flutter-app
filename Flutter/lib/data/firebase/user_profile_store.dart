@@ -16,7 +16,7 @@ class UserProfileStore {
           );
       return doc.data();
     } on FirebaseException catch (e) {
-      if (isTransientFirestoreError(e)) return null;
+      if (isNonBlockingFirestoreError(e)) return null;
       rethrow;
     }
   }
@@ -34,7 +34,7 @@ class UserProfileStore {
           );
       return true;
     } on FirebaseException catch (e) {
-      if (isTransientFirestoreError(e)) return false;
+      if (isNonBlockingFirestoreError(e)) return false;
       rethrow;
     }
   }

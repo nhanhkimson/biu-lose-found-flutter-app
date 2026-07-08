@@ -1,41 +1,34 @@
+import 'package:beltei_app/core/network/api_exception.dart';
+import 'package:beltei_app/data/firebase/notifications_store.dart';
 import 'package:beltei_app/data/models/lost_found_item.dart';
-import 'package:beltei_app/core/network/api_client.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class NotificationsRepository {
-  NotificationsRepository(this._api);
+  NotificationsRepository(this._store, {FirebaseAuth? auth})
+      : _auth = auth ?? FirebaseAuth.instance;
 
-  final ApiClient _api;
+  final NotificationsStore _store;
+  final FirebaseAuth _auth;
+
+  String? get _userId => _auth.currentUser?.uid;
 
   Future<({List<AppNotification> notifications, int unreadCount})> fetch({
     int limit = 50,
   }) async {
-    final json = await _api.get(
-      '/api/notifications',
-      query: {'limit': '$limit'},
-      auth: true,
-    );
-    final list = json['notifications'] as List<dynamic>? ?? [];
-    return (
-      notifications: list
-          .map((e) => AppNotification.fromJson(e as Map<String, dynamic>))
-          .toList(),
-      unreadCount: json['unreadCount'] as int? ?? 0,
-    );
+    final uid = _userId;
+    if (uid == null) throw ApiException('Sign in to view notifications.');
+    return _store.fetchForUser(userId: uid, limit: limit);
   }
 
   Future<void> markAllRead() async {
-    await _api.post(
-      '/api/notifications/mark-read',
-      auth: true,
-      body: {'all': true},
-    );
+    final uid = _userId;
+    if (uid == null) throw ApiException('Sign in to update notifications.');
+    await _store.markAllRead(uid);
   }
 
   Future<void> markRead(List<String> ids) async {
-    await _api.post(
-      '/api/notifications/mark-read',
-      auth: true,
-      body: {'ids': ids},
-    );
+    final uid = _userId;
+    if (uid == null) throw ApiException('Sign in to update notifications.');
+    await _store.markRead(uid, ids);
   }
 }

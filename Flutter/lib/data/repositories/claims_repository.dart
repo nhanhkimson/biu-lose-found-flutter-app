@@ -1,21 +1,32 @@
-import 'package:beltei_app/core/network/api_client.dart';
+import 'package:beltei_app/core/network/api_exception.dart';
+import 'package:beltei_app/data/firebase/claims_store.dart';
+import 'package:beltei_app/data/firebase/items_store.dart';
+import 'package:beltei_app/data/firebase/notifications_store.dart';
 import 'package:beltei_app/data/models/claim_item.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ClaimsRepository {
-  ClaimsRepository(this._api);
+  ClaimsRepository(
+    this._claims,
+    this._items,
+    this._notifications, {
+    FirebaseAuth? auth,
+  }) : _auth = auth ?? FirebaseAuth.instance;
 
-  final ApiClient _api;
+  final ClaimsStore _claims;
+  final ItemsStore _items;
+  final NotificationsStore _notifications;
+  final FirebaseAuth _auth;
+
+  String? get _userId => _auth.currentUser?.uid;
 
   Future<ClaimsPage> fetchMyClaims({
     int page = 1,
     String? status,
   }) async {
-    final query = <String, String>{
-      'page': '$page',
-      if (status != null && status.isNotEmpty) 'status': status,
-    };
-    final json = await _api.get('/api/claims', query: query, auth: true);
-    return ClaimsPage.fromJson(json);
+    final uid = _userId;
+    if (uid == null) throw ApiException('Sign in to view your claims.');
+    return _claims.queryByUser(userId: uid, page: page, status: status);
   }
 
   Future<String> submitClaim({
@@ -23,15 +34,39 @@ class ClaimsRepository {
     required String message,
     List<String> proofImageUrls = const [],
   }) async {
-    final json = await _api.post(
-      '/api/claims',
-      auth: true,
-      body: {
-        'itemId': itemId,
-        'message': message.trim(),
-        'proofImageUrls': proofImageUrls,
-      },
+    final uid = _userId;
+    if (uid == null) throw ApiException('Sign in to submit a claim.');
+
+    final itemData = await _items.getRaw(itemId);
+    if (itemData == null) throw ApiException('Item not found.');
+
+    final itemOwnerId = itemData['userId'] as String?;
+    final itemSnapshot = {
+      'id': itemId,
+      'title': itemData['title'],
+      'type': itemData['type'],
+      'status': itemData['status'],
+      'imageUrl': itemData['imageUrl'],
+    };
+
+    final claimId = await _claims.create(
+      userId: uid,
+      itemId: itemId,
+      message: message,
+      itemSnapshot: itemSnapshot,
+      proofImageUrls: proofImageUrls,
     );
-    return json['id'] as String;
+
+    if (itemOwnerId != null && itemOwnerId.isNotEmpty && itemOwnerId != uid) {
+      await _notifications.create(
+        userId: itemOwnerId,
+        kind: 'claim',
+        title: 'New claim on your listing',
+        message: 'Someone submitted a claim for "${itemData['title']}".',
+        link: '/items/$itemId',
+      );
+    }
+
+    return claimId;
   }
 }

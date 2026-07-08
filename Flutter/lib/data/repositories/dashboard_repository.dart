@@ -1,30 +1,20 @@
-import 'package:beltei_app/core/network/api_client.dart';
 import 'package:beltei_app/data/models/dashboard_data.dart';
 import 'package:beltei_app/data/repositories/claims_repository.dart';
 import 'package:beltei_app/data/repositories/items_repository.dart';
 
 class DashboardRepository {
-  DashboardRepository(this._api, this._items, this._claims);
+  DashboardRepository(this._items, this._claims);
 
-  final ApiClient _api;
   final ItemsRepository _items;
   final ClaimsRepository _claims;
 
   Future<DashboardPayload> fetch() async {
-    try {
-      final json = await _api.get('/api/dashboard', auth: true);
-      return DashboardPayload.fromJson(json);
-    } catch (_) {
-      return _buildFromUserData();
-    }
-  }
-
-  Future<DashboardPayload> _buildFromUserData() async {
     final stats = await _fetchStats();
     final activity = await _fetchActivity();
+    final matches = await _fetchMatches();
     return DashboardPayload(
       stats: stats,
-      matches: const [],
+      matches: matches,
       activity: activity,
     );
   }
@@ -89,6 +79,56 @@ class DashboardRepository {
         return bAt.compareTo(aAt);
       });
       return rows.take(10).toList();
+    } catch (_) {
+      return const [];
+    }
+  }
+
+  Future<List<MatchSuggestion>> _fetchMatches() async {
+    try {
+      final myItems = await _items.fetchMyItems(status: 'OPEN');
+      final browse = await _items.fetchItems(status: 'OPEN', preferCache: false);
+      final suggestions = <MatchSuggestion>[];
+
+      for (final mine in myItems.items) {
+        final opposite = mine.type == 'LOST' ? 'FOUND' : 'LOST';
+        for (final other in browse.items) {
+          if (other.id == mine.id) continue;
+          if (other.type != opposite) continue;
+          if (other.category != mine.category) continue;
+          if (other.building != mine.building) continue;
+
+          var confidence = 60;
+          if (mine.color != null &&
+              mine.color!.isNotEmpty &&
+              mine.color == other.color) {
+            confidence += 15;
+          }
+          if (mine.brand != null &&
+              mine.brand!.isNotEmpty &&
+              mine.brand == other.brand) {
+            confidence += 15;
+          }
+          if (confidence > 100) confidence = 100;
+
+          suggestions.add(
+            MatchSuggestion(
+              id: '${mine.id}_${other.id}',
+              myItemId: mine.id,
+              myItemTitle: mine.title,
+              mySide: mine.type,
+              otherItemId: other.id,
+              otherTitle: other.title,
+              otherSide: other.type,
+              confidence: confidence,
+              building: mine.building,
+            ),
+          );
+        }
+      }
+
+      suggestions.sort((a, b) => b.confidence.compareTo(a.confidence));
+      return suggestions.take(10).toList();
     } catch (_) {
       return const [];
     }

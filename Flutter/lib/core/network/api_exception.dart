@@ -7,3 +7,6 @@ class ApiException implements Exception {
   @override
   String toString() => message;
 }
+
+/// User dismissed the sign-in flow (e.g. closed Facebook login).
+class AuthCancelledException implements Exception {}

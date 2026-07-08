@@ -104,7 +104,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   onPressed: auth.isLoading.value
                       ? null
                       : () async {
-                          final ok = await auth.loginWithFacebook();
+                          final ok = await auth.loginWithGoogle();
                           if (!mounted) return;
                           if (ok) {
                             Get.offAll(() => const AppShell());
@@ -116,8 +116,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             SnackBar(content: Text(auth.error.value)),
                           );
                         },
-                  icon: const Icon(Icons.facebook, color: Color(0xFF1877F2)),
-                  label: const Text('ចូលជាមួយ Facebook'),
+                  icon: const Icon(Icons.g_mobiledata, color: Color(0xFF4285F4), size: 28),
+                  label: const Text('ចូលជាមួយ Google'),
                 );
               }),
               const SizedBox(height: 16),

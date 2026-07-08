@@ -1,12 +1,18 @@
-import 'package:beltei_app/core/network/api_client.dart';
+import 'package:beltei_app/core/network/api_exception.dart';
+import 'package:beltei_app/data/firebase/items_store.dart';
 import 'package:beltei_app/data/local/items_cache.dart';
 import 'package:beltei_app/data/models/lost_found_item.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ItemsRepository {
-  ItemsRepository(this._api, this._cache);
+  ItemsRepository(this._store, this._cache, {FirebaseAuth? auth})
+      : _auth = auth ?? FirebaseAuth.instance;
 
-  final ApiClient _api;
+  final ItemsStore _store;
   final ItemsCache _cache;
+  final FirebaseAuth _auth;
+
+  String? get _userId => _auth.currentUser?.uid;
 
   Future<ItemsPage> fetchItems({
     int page = 1,
@@ -26,24 +32,23 @@ class ItemsRepository {
       if (cached != null) return cached;
     }
 
-    final query = <String, String>{
-      'page': '$page',
-      if (mine) 'mine': 'true',
-      if (q != null && q.isNotEmpty) 'q': q,
-      if (type != null && type.isNotEmpty) 'type': type,
-      if (category != null && category.isNotEmpty) 'category': category,
-      if (building != null && building.isNotEmpty) 'building': building,
-      if (status != null && status.isNotEmpty) 'status': status,
-      if (dateFrom != null && dateFrom.isNotEmpty) 'dateFrom': dateFrom,
-      if (dateTo != null && dateTo.isNotEmpty) 'dateTo': dateTo,
-    };
+    if (mine) {
+      final uid = _userId;
+      if (uid == null) throw ApiException('Sign in to view your items.');
+    }
 
-    final json = await _api.get(
-      '/api/items',
-      query: query,
-      auth: mine,
+    final result = await _store.queryItems(
+      page: page,
+      q: q,
+      type: type,
+      category: category,
+      building: building,
+      status: status,
+      dateFrom: dateFrom,
+      dateTo: dateTo,
+      userId: mine ? _userId : null,
     );
-    final result = ItemsPage.fromJson(json);
+
     if (!mine && page == 1) {
       await _cache.put(key, result);
     }
@@ -58,25 +63,22 @@ class ItemsRepository {
       fetchItems(page: page, type: type, status: status, mine: true, preferCache: false);
 
   Future<LostFoundItem> fetchDetail(String id) async {
-    final json = await _api.get('/api/items/$id');
-    return LostFoundItem.fromDetailJson(json);
+    final item = await _store.getDetail(id);
+    if (item == null) throw ApiException('Item not found.');
+    return item;
   }
 
   Future<List<LostFoundItem>> fetchSimilar(String id) async {
-    final json = await _api.get('/api/items/$id/similar');
-    final list = json['items'] as List<dynamic>? ?? [];
-    return list
-        .map((e) => LostFoundItem.fromListJson(e as Map<String, dynamic>))
-        .toList();
+    return _store.findSimilar(id);
   }
 
   Future<String> createItem(Map<String, dynamic> payload) async {
-    final json = await _api.post('/api/items', body: payload, auth: true);
-    return json['id'] as String;
+    final uid = _userId;
+    if (uid == null) throw ApiException('Sign in to publish a listing.');
+    return _store.create(uid, payload);
   }
 
   Future<LostFoundItem> updateStatus(String id, String status) async {
-    final json = await _api.patch('/api/items/$id', body: {'status': status});
-    return LostFoundItem.fromDetailJson(json);
+    return _store.updateStatus(id, status);
   }
 }

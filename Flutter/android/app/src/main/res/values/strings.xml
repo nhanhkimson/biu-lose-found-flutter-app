@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="app_name">Beltei App</string>
     <string name="facebook_app_id">1620723612327369</string>
     <string name="fb_login_protocol_scheme">fb1620723612327369</string>
     <string name="facebook_client_token">44ff5d875e2f0a8a1d8d5f877bfe674e</string>

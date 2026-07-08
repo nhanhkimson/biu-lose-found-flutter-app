@@ -74,11 +74,7 @@ class ProfileRepository {
   }
 
   Future<void> _persistSession(AppUser user) async {
-    final token = await _auth.currentUser?.getIdToken(true);
-    if (token == null || token.isEmpty) {
-      throw ApiException('Failed to refresh auth token.');
-    }
-    await _session.saveSession(sessionToken: token, user: user);
+    await _session.saveSession(user: user);
   }
 
   Future<ProfileStats> _fetchStats() async {

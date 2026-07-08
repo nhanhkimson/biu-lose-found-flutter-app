@@ -3,19 +3,22 @@ import 'dart:convert';
 import 'package:beltei_app/data/models/app_user.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Persists Bearer session token and user profile for API auth.
+/// Persists cached user profile locally. Optional API token for future REST auth.
 class SessionStore {
   static const _tokenKey = 'api_session_token';
   static const _userKey = 'api_user_json';
   static const _loggedInKey = 'logged_in';
   static const _themeModeKey = 'theme_mode';
 
+  /// Saves the signed-in user locally (Firestore is the remote source of truth).
   Future<void> saveSession({
-    required String sessionToken,
     required AppUser user,
+    String? sessionToken,
   }) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_tokenKey, sessionToken);
+    if (sessionToken != null && sessionToken.isNotEmpty) {
+      await prefs.setString(_tokenKey, sessionToken);
+    }
     await prefs.setString(_userKey, jsonEncode(user.toJson()));
     await prefs.setBool(_loggedInKey, true);
   }
@@ -39,10 +42,7 @@ class SessionStore {
 
   Future<bool> get isLoggedIn async {
     final prefs = await SharedPreferences.getInstance();
-    final loggedIn = prefs.getBool(_loggedInKey) ?? false;
-    if (!loggedIn) return false;
-    final token = prefs.getString(_tokenKey);
-    return token != null && token.isNotEmpty;
+    return prefs.getBool(_loggedInKey) ?? false;
   }
 
   Future<void> clear() async {

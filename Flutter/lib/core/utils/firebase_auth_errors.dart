@@ -6,7 +6,7 @@ String mapFirebaseAuthError(FirebaseAuthException e) {
     case 'wrong-password':
       return 'Invalid email or password.';
     case 'invalid-credential':
-      return 'Facebook sign-in failed. In Firebase Console → Authentication → Sign-in method → Facebook, enable it and add your Facebook App Secret from Meta → Settings → Basic.';
+      return 'Sign-in failed. Check that Google (or Facebook) is enabled in Firebase Console → Authentication → Sign-in method.';
     case 'requires-recent-login':
       return 'Please sign out and sign in again before changing your password.';
     case 'email-already-in-use':

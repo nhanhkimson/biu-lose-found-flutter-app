@@ -1,5 +1,8 @@
-import 'package:beltei_app/core/network/api_client.dart';
 import 'package:beltei_app/core/storage/session_store.dart';
+import 'package:beltei_app/data/firebase/claims_store.dart';
+import 'package:beltei_app/data/firebase/items_store.dart';
+import 'package:beltei_app/data/firebase/notifications_store.dart';
+import 'package:beltei_app/data/firebase/storage_upload_store.dart';
 import 'package:beltei_app/data/local/items_cache.dart';
 import 'package:beltei_app/data/repositories/auth_repository.dart';
 import 'package:beltei_app/data/repositories/claims_repository.dart';
@@ -16,27 +19,38 @@ class AppBindings extends Bindings {
   void dependencies() {
     final session = SessionStore();
     Get.put(session, permanent: true);
-    Get.put(ApiClient(session), permanent: true);
     Get.put(ItemsCache(), permanent: true);
+
+    Get.put(ItemsStore(), permanent: true);
+    Get.put(ClaimsStore(), permanent: true);
+    Get.put(NotificationsStore(), permanent: true);
+    Get.put(StorageUploadStore(), permanent: true);
+
     Get.put(
       AuthRepository(session),
       permanent: true,
     );
     Get.put(
-      ItemsRepository(Get.find<ApiClient>(), Get.find<ItemsCache>()),
+      ItemsRepository(Get.find<ItemsStore>(), Get.find<ItemsCache>()),
       permanent: true,
     );
-    Get.put(ClaimsRepository(Get.find<ApiClient>()), permanent: true);
+    Get.put(
+      ClaimsRepository(
+        Get.find<ClaimsStore>(),
+        Get.find<ItemsStore>(),
+        Get.find<NotificationsStore>(),
+      ),
+      permanent: true,
+    );
     Get.put(
       DashboardRepository(
-        Get.find<ApiClient>(),
         Get.find<ItemsRepository>(),
         Get.find<ClaimsRepository>(),
       ),
       permanent: true,
     );
     Get.put(
-      NotificationsRepository(Get.find<ApiClient>()),
+      NotificationsRepository(Get.find<NotificationsStore>()),
       permanent: true,
     );
     Get.put(
