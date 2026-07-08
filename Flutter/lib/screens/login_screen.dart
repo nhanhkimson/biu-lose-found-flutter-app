@@ -120,6 +120,29 @@ class _LoginScreenState extends State<LoginScreen> {
                   label: const Text('ចូលជាមួយ Google'),
                 );
               }),
+              const SizedBox(height: 12),
+              Obx(() {
+                final auth = Get.find<AuthController>();
+                return OutlinedButton.icon(
+                  onPressed: auth.isLoading.value
+                      ? null
+                      : () async {
+                          final ok = await auth.loginWithFacebook();
+                          if (!mounted) return;
+                          if (ok) {
+                            Get.offAll(() => const AppShell());
+                            return;
+                          }
+                          if (auth.error.value.isEmpty) return;
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(auth.error.value)),
+                          );
+                        },
+                  icon: const Icon(Icons.facebook, color: Color(0xFF1877F2)),
+                  label: const Text('ចូលជាមួយ Facebook'),
+                );
+              }),
               const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,

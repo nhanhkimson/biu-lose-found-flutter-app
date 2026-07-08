@@ -221,9 +221,7 @@ class AuthRepository {
 
   Future<LoginResult> _requestFacebookLogin() async {
     final loginTracking = await _facebookLoginTracking();
-    final loginBehavior = defaultTargetPlatform == TargetPlatform.android
-        ? LoginBehavior.webOnly
-        : LoginBehavior.nativeWithFallback;
+    final loginBehavior = LoginBehavior.nativeWithFallback;
 
     authLog(
       'facebook:requestLogin',
@@ -265,23 +263,15 @@ class AuthRepository {
     );
 
     if (accessToken is LimitedToken) {
+      final nonce = accessToken.nonce.trim();
+      if (nonce.isEmpty) {
+        throw ApiException('Facebook sign-in failed: missing login nonce.');
+      }
       authLog('facebook:buildCredential', 'using LimitedToken + nonce');
       return OAuthProvider('facebook.com').credential(
         idToken: accessToken.tokenString,
-        rawNonce: accessToken.nonce,
+        rawNonce: nonce,
       );
-    }
-
-    if (accessToken is ClassicToken) {
-      final authToken = accessToken.authenticationToken?.trim();
-      authLog(
-        'facebook:buildCredential',
-        'classic userId=${accessToken.userId} authToken=${authTokenSummary(authToken)}',
-      );
-      if (authToken != null && authToken.isNotEmpty) {
-        authLog('facebook:buildCredential', 'using ClassicToken authenticationToken');
-        return OAuthProvider('facebook.com').credential(idToken: authToken);
-      }
     }
 
     authLog('facebook:buildCredential', 'using FacebookAuthProvider access token');
