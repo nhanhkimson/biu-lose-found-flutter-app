@@ -20,6 +20,12 @@ class NotificationsRepository {
     return _store.fetchForUser(userId: uid, limit: limit);
   }
 
+  Future<int> fetchUnreadCount() async {
+    final uid = _userId;
+    if (uid == null) return 0;
+    return _store.countUnread(uid);
+  }
+
   Future<void> markAllRead() async {
     final uid = _userId;
     if (uid == null) throw ApiException('Sign in to update notifications.');

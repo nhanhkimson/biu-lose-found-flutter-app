@@ -1,4 +1,5 @@
 import 'package:beltei_app/controllers/auth_controller.dart';
+import 'package:beltei_app/core/network/api_exception.dart';
 import 'package:beltei_app/data/models/lost_found_item.dart';
 import 'package:beltei_app/data/repositories/notifications_repository.dart';
 import 'package:beltei_app/core/utils/notification_navigation.dart';
@@ -48,9 +49,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         _unread = result.unreadCount;
         _loading = false;
       });
+    } on ApiException catch (e) {
+      setState(() {
+        _error = e.message;
+        _loading = false;
+      });
     } catch (e) {
       setState(() {
-        _error = e.toString();
+        _error = 'Could not load notifications. Pull down to retry.';
         _loading = false;
       });
     }

@@ -43,17 +43,19 @@ class ClaimsStore {
     String? status,
   }) async {
     Query<Map<String, dynamic>> query =
-        _col.where('userId', isEqualTo: userId).orderBy('createdAt', descending: true);
+        _col.where('userId', isEqualTo: userId);
+
+    if (status != null && status.isNotEmpty) {
+      query = query.where('status', isEqualTo: status);
+    }
+
+    query = query.orderBy('createdAt', descending: true);
 
     final snapshot = await query.get();
-    final filtered = snapshot.docs.where((doc) {
-      if (status == null || status.isEmpty) return true;
-      return doc.data()['status'] == status;
-    }).toList();
-
-    final total = filtered.length;
-    final totalPages = total == 0 ? 1 : ((total + pageSize - 1) / pageSize).ceil();
-    final pageDocs = paginateList(filtered, page: page, pageSize: pageSize);
+    final total = snapshot.docs.length;
+    final totalPages =
+        total == 0 ? 1 : ((total + pageSize - 1) / pageSize).ceil();
+    final pageDocs = paginateList(snapshot.docs, page: page, pageSize: pageSize);
 
     return ClaimsPage(
       claims: pageDocs.map(_fromDoc).toList(),

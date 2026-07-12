@@ -1,8 +1,10 @@
 import 'package:beltei_app/core/network/api_exception.dart';
+import 'package:beltei_app/core/utils/firebase_firestore_errors.dart';
 import 'package:beltei_app/data/firebase/items_store.dart';
 import 'package:beltei_app/data/local/items_cache.dart';
 import 'package:beltei_app/data/models/lost_found_item.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
 
 class ItemsRepository {
   ItemsRepository(this._store, this._cache, {FirebaseAuth? auth})
@@ -26,7 +28,16 @@ class ItemsRepository {
     bool mine = false,
     bool preferCache = true,
   }) async {
-    final key = ItemsCache.cacheKey(page: page, type: type, q: q, category: category);
+    final key = ItemsCache.cacheKey(
+      page: page,
+      type: type,
+      q: q,
+      category: category,
+      building: building,
+      status: status,
+      dateFrom: dateFrom,
+      dateTo: dateTo,
+    );
     if (!mine && preferCache && page == 1) {
       final cached = await _cache.get(key);
       if (cached != null) return cached;
@@ -37,22 +48,26 @@ class ItemsRepository {
       if (uid == null) throw ApiException('Sign in to view your items.');
     }
 
-    final result = await _store.queryItems(
-      page: page,
-      q: q,
-      type: type,
-      category: category,
-      building: building,
-      status: status,
-      dateFrom: dateFrom,
-      dateTo: dateTo,
-      userId: mine ? _userId : null,
-    );
+    try {
+      final result = await _store.queryItems(
+        page: page,
+        q: q,
+        type: type,
+        category: category,
+        building: building,
+        status: status,
+        dateFrom: dateFrom,
+        dateTo: dateTo,
+        userId: mine ? _userId : null,
+      );
 
-    if (!mine && page == 1) {
-      await _cache.put(key, result);
+      if (!mine && page == 1) {
+        await _cache.put(key, result);
+      }
+      return result;
+    } on FirebaseException catch (e) {
+      throw ApiException(mapFirestoreError(e));
     }
-    return result;
   }
 
   Future<ItemsPage> fetchMyItems({
@@ -63,9 +78,13 @@ class ItemsRepository {
       fetchItems(page: page, type: type, status: status, mine: true, preferCache: false);
 
   Future<LostFoundItem> fetchDetail(String id) async {
-    final item = await _store.getDetail(id);
-    if (item == null) throw ApiException('Item not found.');
-    return item;
+    try {
+      return await _store.getDetail(id);
+    } on StateError {
+      throw ApiException('Item not found.');
+    } on FirebaseException catch (e) {
+      throw ApiException(mapFirestoreError(e));
+    }
   }
 
   Future<List<LostFoundItem>> fetchSimilar(String id) async {
@@ -75,10 +94,23 @@ class ItemsRepository {
   Future<String> createItem(Map<String, dynamic> payload) async {
     final uid = _userId;
     if (uid == null) throw ApiException('Sign in to publish a listing.');
-    return _store.create(uid, payload);
+    final id = await _store.create(uid, payload);
+    await _cache.clear();
+    return id;
   }
 
   Future<LostFoundItem> updateStatus(String id, String status) async {
-    return _store.updateStatus(id, status);
+    final uid = _userId;
+    if (uid == null) throw ApiException('Sign in to update item status.');
+
+    final raw = await _store.getRaw(id);
+    if (raw == null) throw ApiException('Item not found.');
+    if (raw['userId'] != uid) {
+      throw ApiException('You can only update your own listings.');
+    }
+
+    final updated = await _store.updateStatus(id, status);
+    await _cache.clear();
+    return updated;
   }
 }

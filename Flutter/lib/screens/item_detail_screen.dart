@@ -1,12 +1,16 @@
 import 'package:beltei_app/controllers/auth_controller.dart';
 import 'package:beltei_app/core/constants/lost_found_constants.dart';
+import 'package:beltei_app/core/network/api_exception.dart';
 import 'package:beltei_app/core/utils/date_format.dart';
+import 'package:beltei_app/core/utils/firebase_firestore_errors.dart';
 import 'package:beltei_app/data/models/lost_found_item.dart';
 import 'package:beltei_app/data/repositories/items_repository.dart';
 import 'package:beltei_app/screens/claim_screen.dart';
 import 'package:beltei_app/widgets/item_card.dart';
+import 'package:beltei_app/widgets/app_image.dart';
 import 'package:beltei_app/widgets/type_badge.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:get/get.dart';
 
 class ItemDetailScreen extends StatefulWidget {
@@ -43,7 +47,10 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     });
     try {
       final detail = await _repo.fetchDetail(widget.itemId);
-      final similar = await _repo.fetchSimilar(widget.itemId);
+      List<LostFoundItem> similar = const [];
+      try {
+        similar = await _repo.fetchSimilar(widget.itemId);
+      } catch (_) {}
       setState(() {
         _item = detail;
         _similar = similar;
@@ -51,7 +58,11 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
       });
     } catch (e) {
       setState(() {
-        _error = e.toString();
+        _error = e is ApiException
+            ? e.message
+            : e is FirebaseException
+                ? mapFirestoreError(e)
+                : 'Could not load item details.';
         _loading = false;
       });
     }
@@ -98,7 +109,22 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? Center(child: Text(_error!))
+              ? Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(_error!, textAlign: TextAlign.center),
+                        const SizedBox(height: 16),
+                        FilledButton(
+                          onPressed: _load,
+                          child: const Text('Retry'),
+                        ),
+                      ],
+                    ),
+                  ),
+                )
               : _buildContent(context, _item!),
       bottomNavigationBar: _item == null ? null : _buildBottomBar(_item!),
     );
@@ -157,8 +183,8 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
               height: 220,
               child: PageView.builder(
                 itemCount: gallery.length,
-                itemBuilder: (_, i) => Image.network(
-                  gallery[i],
+                itemBuilder: (_, i) => AppImage(
+                  url: gallery[i],
                   fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) => const ColoredBox(
                     color: Colors.black12,

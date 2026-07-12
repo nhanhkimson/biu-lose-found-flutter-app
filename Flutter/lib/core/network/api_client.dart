@@ -4,6 +4,7 @@ import 'package:beltei_app/core/config/app_config.dart';
 import 'package:beltei_app/core/media/image_upload_helper.dart';
 import 'package:beltei_app/core/network/api_exception.dart';
 import 'package:beltei_app/core/storage/session_store.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 
@@ -22,12 +23,18 @@ class ApiClient {
   Future<Map<String, String>> _headers({bool auth = false}) async {
     final headers = <String, String>{'Accept': 'application/json'};
     if (auth) {
-      final token = await _session.sessionToken;
+      final token = await _resolveAuthToken();
       if (token != null && token.isNotEmpty) {
         headers['Authorization'] = 'Bearer $token';
       }
     }
     return headers;
+  }
+
+  Future<String?> _resolveAuthToken() async {
+    final cached = await _session.sessionToken;
+    if (cached != null && cached.isNotEmpty) return cached;
+    return FirebaseAuth.instance.currentUser?.getIdToken();
   }
 
   Future<Map<String, dynamic>> get(

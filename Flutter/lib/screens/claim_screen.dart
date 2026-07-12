@@ -1,6 +1,8 @@
+import 'package:beltei_app/core/network/api_exception.dart';
 import 'package:beltei_app/data/firebase/storage_upload_store.dart';
 import 'package:beltei_app/data/models/lost_found_item.dart';
 import 'package:beltei_app/data/repositories/claims_repository.dart';
+import 'package:beltei_app/widgets/app_image.dart';
 import 'package:beltei_app/widgets/primary_button.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -38,7 +40,10 @@ class _ClaimScreenState extends State<ClaimScreen> {
       setState(() => _proofUrls.add(url));
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+        final message = e is ApiException
+            ? e.message
+            : 'Could not upload image. Try a smaller photo.';
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -66,7 +71,8 @@ class _ClaimScreenState extends State<ClaimScreen> {
       Get.back(result: true);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+        final message = e is ApiException ? e.message : 'Could not submit claim.';
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -108,7 +114,12 @@ class _ClaimScreenState extends State<ClaimScreen> {
                   separatorBuilder: (_, __) => const SizedBox(width: 8),
                   itemBuilder: (_, i) => ClipRRect(
                     borderRadius: BorderRadius.circular(8),
-                    child: Image.network(_proofUrls[i], width: 80, height: 80, fit: BoxFit.cover),
+                    child: AppImage(
+                      url: _proofUrls[i],
+                      width: 80,
+                      height: 80,
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
               ),

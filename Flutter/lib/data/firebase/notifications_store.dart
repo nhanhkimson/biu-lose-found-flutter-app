@@ -26,6 +26,15 @@ class NotificationsStore {
     );
   }
 
+  Future<int> countUnread(String userId) async {
+    final snapshot = await _col
+        .where('userId', isEqualTo: userId)
+        .where('read', isEqualTo: false)
+        .count()
+        .get();
+    return snapshot.count ?? 0;
+  }
+
   Future<({List<AppNotification> notifications, int unreadCount})> fetchForUser({
     required String userId,
     int limit = 50,
@@ -37,7 +46,7 @@ class NotificationsStore {
         .get();
 
     final notifications = snapshot.docs.map(_fromDoc).toList();
-    final unreadCount = notifications.where((n) => !n.read).length;
+    final unreadCount = await countUnread(userId);
     return (notifications: notifications, unreadCount: unreadCount);
   }
 

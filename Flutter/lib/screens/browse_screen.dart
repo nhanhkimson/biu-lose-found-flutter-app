@@ -1,4 +1,6 @@
+import 'package:beltei_app/core/network/api_exception.dart';
 import 'package:beltei_app/core/theme/app_colors.dart';
+import 'package:beltei_app/core/utils/firebase_firestore_errors.dart';
 import 'package:beltei_app/data/models/lost_found_item.dart';
 import 'package:beltei_app/data/repositories/items_repository.dart';
 import 'package:beltei_app/screens/item_detail_screen.dart';
@@ -6,6 +8,7 @@ import 'package:beltei_app/widgets/browse_filters_sheet.dart';
 import 'package:beltei_app/widgets/empty_state.dart';
 import 'package:beltei_app/widgets/item_card.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:get/get.dart';
 
 class BrowseScreen extends StatefulWidget {
@@ -61,7 +64,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
         status: _filters.status,
         dateFrom: _filters.dateFrom?.toIso8601String().split('T').first,
         dateTo: _filters.dateTo?.toIso8601String().split('T').first,
-        preferCache: refresh,
+        preferCache: refresh && _filterType == null && !_filters.hasActive,
       );
       setState(() {
         if (refresh) {
@@ -78,7 +81,11 @@ class _BrowseScreenState extends State<BrowseScreen> {
       });
     } catch (e) {
       setState(() {
-        _error = e.toString();
+        _error = e is ApiException
+            ? e.message
+            : e is FirebaseException
+                ? mapFirestoreError(e)
+                : 'Could not load items. Pull down to retry.';
         _loading = false;
         _loadingMore = false;
       });

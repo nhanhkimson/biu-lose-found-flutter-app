@@ -9,40 +9,42 @@ class DashboardRepository {
   final ClaimsRepository _claims;
 
   Future<DashboardPayload> fetch() async {
-    final stats = await _fetchStats();
-    final activity = await _fetchActivity();
-    final matches = await _fetchMatches();
+    final results = await Future.wait([
+      _fetchStats(),
+      _fetchActivity(),
+      _fetchMatches(),
+    ]);
     return DashboardPayload(
-      stats: stats,
-      matches: matches,
-      activity: activity,
+      stats: results[0] as DashboardStats,
+      activity: results[1] as List<Map<String, dynamic>>,
+      matches: results[2] as List<MatchSuggestion>,
     );
   }
 
-  Future<DashboardStats> _fetchStats() async {
+  Future<int> _safeTotal(Future<dynamic> Function() load) async {
     try {
-      final lostPage = await _items.fetchMyItems(type: 'LOST');
-      final foundPage = await _items.fetchMyItems(type: 'FOUND');
-      final claimsPage = await _claims.fetchMyClaims();
-      final resolvedLost =
-          await _items.fetchMyItems(type: 'LOST', status: 'RESOLVED');
-      final resolvedFound =
-          await _items.fetchMyItems(type: 'FOUND', status: 'RESOLVED');
-
-      return DashboardStats(
-        myLost: lostPage.total,
-        myFound: foundPage.total,
-        myClaims: claimsPage.total,
-        myResolved: resolvedLost.total + resolvedFound.total,
-      );
+      final page = await load();
+      return page.total as int;
     } catch (_) {
-      return const DashboardStats(
-        myLost: 0,
-        myFound: 0,
-        myClaims: 0,
-        myResolved: 0,
-      );
+      return 0;
     }
+  }
+
+  Future<DashboardStats> _fetchStats() async {
+    final lost = await _safeTotal(() => _items.fetchMyItems(type: 'LOST'));
+    final found = await _safeTotal(() => _items.fetchMyItems(type: 'FOUND'));
+    final claims = await _safeTotal(() => _claims.fetchMyClaims());
+    final resolvedLost =
+        await _safeTotal(() => _items.fetchMyItems(type: 'LOST', status: 'RESOLVED'));
+    final resolvedFound =
+        await _safeTotal(() => _items.fetchMyItems(type: 'FOUND', status: 'RESOLVED'));
+
+    return DashboardStats(
+      myLost: lost,
+      myFound: found,
+      myClaims: claims,
+      myResolved: resolvedLost + resolvedFound,
+    );
   }
 
   Future<List<Map<String, dynamic>>> _fetchActivity() async {

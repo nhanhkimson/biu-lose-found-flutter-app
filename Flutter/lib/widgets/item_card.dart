@@ -2,6 +2,7 @@ import 'package:beltei_app/core/constants/lost_found_constants.dart';
 import 'package:beltei_app/core/theme/app_colors.dart';
 import 'package:beltei_app/core/utils/date_format.dart';
 import 'package:beltei_app/data/models/lost_found_item.dart';
+import 'package:beltei_app/widgets/app_image.dart';
 import 'package:beltei_app/widgets/type_badge.dart';
 import 'package:flutter/material.dart';
 
@@ -24,8 +25,8 @@ class ItemCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             if (item.imageUrl != null && item.imageUrl!.isNotEmpty)
-              Image.network(
-                item.imageUrl!,
+              AppImage(
+                url: item.imageUrl!,
                 height: 160,
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) => _imagePlaceholder(context),

@@ -1,15 +1,14 @@
-import 'package:beltei_app/core/media/image_upload_helper.dart';
 import 'package:beltei_app/core/network/api_exception.dart';
 import 'package:beltei_app/core/storage/session_store.dart';
 import 'package:beltei_app/core/utils/firebase_auth_errors.dart';
 import 'package:beltei_app/core/utils/user_photo_url.dart';
+import 'package:beltei_app/data/firebase/storage_upload_store.dart';
 import 'package:beltei_app/data/firebase/user_profile_store.dart';
 import 'package:beltei_app/data/models/app_user.dart';
 import 'package:beltei_app/data/models/profile_activity.dart';
 import 'package:beltei_app/data/repositories/claims_repository.dart';
 import 'package:beltei_app/data/repositories/items_repository.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 
 class ProfileRepository {
@@ -19,17 +18,17 @@ class ProfileRepository {
     this._claims, {
     UserProfileStore? profileStore,
     FirebaseAuth? auth,
-    FirebaseStorage? storage,
+    StorageUploadStore? storage,
   })  : _profileStore = profileStore ?? UserProfileStore(),
         _auth = auth ?? FirebaseAuth.instance,
-        _storage = storage ?? FirebaseStorage.instance;
+        _storage = storage ?? StorageUploadStore();
 
   final SessionStore _session;
   final ItemsRepository _items;
   final ClaimsRepository _claims;
   final UserProfileStore _profileStore;
   final FirebaseAuth _auth;
-  final FirebaseStorage _storage;
+  final StorageUploadStore _storage;
 
   AppUser _mapUser(
     User firebaseUser,
@@ -44,7 +43,7 @@ class ProfileRepository {
     return AppUser(
       id: firebaseUser.uid,
       email: firebaseUser.email,
-      name: firebaseUser.displayName,
+      name: extra['name'] as String? ?? firebaseUser.displayName,
       phoneNumber: extra['phone'] as String? ?? firebaseUser.phoneNumber,
       image: resolveUserPhotoUrl(firebaseUser) ??
           readStoredPhotoUrl(extra) ??
@@ -225,13 +224,7 @@ class ProfileRepository {
 
   Future<String> uploadAvatarFile(XFile file) async {
     final firebaseUser = await _requireUser();
-    final prepared = await ImageUploadHelper.prepare(file);
-    final ref = _storage.ref().child('avatars/${firebaseUser.uid}.jpg');
-    await ref.putData(
-      prepared.bytes,
-      SettableMetadata(contentType: 'image/jpeg'),
-    );
-    return ref.getDownloadURL();
+    return _storage.uploadAvatarFile(file, firebaseUser.uid);
   }
 
   Future<void> changePassword({

@@ -95,7 +95,11 @@ class AuthRepository {
     });
     authLog('persistUser:firestoreMerge', merged ? 'ok' : 'failed/skipped');
 
-    await _session.saveSession(user: user);
+    final idToken = await firebaseUser.getIdToken();
+    await _session.saveSession(
+      user: user,
+      sessionToken: idToken,
+    );
     authLog(
       'persistUser:done',
       'uid=${user.id} name=${user.name} localSessionSaved=true',

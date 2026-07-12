@@ -23,8 +23,13 @@ class ItemsCache {
     String? type,
     String? q,
     String? category,
+    String? building,
+    String? status,
+    String? dateFrom,
+    String? dateTo,
   }) {
-    return 'p$page|t${type ?? ''}|q${q ?? ''}|c${category ?? ''}';
+    return 'p$page|t${type ?? ''}|q${q ?? ''}|c${category ?? ''}'
+        '|b${building ?? ''}|s${status ?? ''}|df${dateFrom ?? ''}|dt${dateTo ?? ''}';
   }
 
   Future<void> put(String key, ItemsPage page) async {

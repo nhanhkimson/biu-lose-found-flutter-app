@@ -4,9 +4,9 @@ import 'package:beltei_app/core/utils/firebase_firestore_errors.dart';
 import 'package:beltei_app/data/models/app_user.dart';
 import 'package:beltei_app/data/repositories/auth_repository.dart';
 import 'package:beltei_app/data/repositories/profile_repository.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:firebase_core/firebase_core.dart';
 
 class ProfileController extends GetxController {
   ProfileController(this._profile, this._auth);

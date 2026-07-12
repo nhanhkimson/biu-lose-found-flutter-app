@@ -52,11 +52,14 @@ class _AppShellState extends State<AppShell> {
 
   Future<void> _refreshUnread() async {
     final auth = Get.find<AuthController>();
-    if (!auth.isLoggedIn) return;
+    if (!auth.isLoggedIn) {
+      if (mounted) setState(() => _unreadNotifications = 0);
+      return;
+    }
     try {
       final repo = Get.find<NotificationsRepository>();
-      final result = await repo.fetch(limit: 1);
-      if (mounted) setState(() => _unreadNotifications = result.unreadCount);
+      final count = await repo.fetchUnreadCount();
+      if (mounted) setState(() => _unreadNotifications = count);
     } catch (_) {}
   }
 
